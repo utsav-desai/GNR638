@@ -1,0 +1,13 @@
+Fine-grained classification:
+
+->Train a CNN model with an upper limit of 10M parameters.
+->Please download CUB dataset from here: https://data.caltech.edu/records/65de6-vp158/files/CUB_200_2011.tgz?download=1 
+->Use default train-test split for this task.
+->Submissions will be evaluated based on parameter efficiency, training time efficiency (no. of iterations) and accuracy. 
+->Submissions should include report, code and final model checkpoint. Drive link is fine for checkpoint.
+->Report must include architecture and traiining details. Training loss and accuracy curves should also be incorporated along with final results. 
+->External models: Only ImageNet pretrained models are allowed. 
+->Please use moodle forum or mail to gnr638@googlegroups.com to post queries.
+->Deadline: 29th February, 11:59 PM
+
+~By Professor
