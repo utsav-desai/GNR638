@@ -6,6 +6,7 @@ import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
+from eval import psnr_between_folders
 
 class DenoisingAE(nn.Module):
     def __init__(self):
@@ -97,3 +98,7 @@ if __name__ == "__main__":
             print(f"Saved denoised image as {output_path}")
 
     print("All images processed.")
+
+    # Compute PSNR between blurred images and denoised output images
+    avg_psnr = psnr_between_folders(args.image_folder, args.output_folder)
+    print(f"Average PSNR between corresponding images: {avg_psnr} dB")
