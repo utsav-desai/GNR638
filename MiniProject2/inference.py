@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 from PIL import Image
@@ -31,8 +32,7 @@ class DenoisingAE(nn.Module):
             nn.ReLU(True),
             nn.ConvTranspose2d(64, 3, kernel_size=2, stride=2),
             nn.ReLU(True)
-      )
-
+        )
 
     def forward(self, x):
         x = self.encoder(x)
@@ -45,7 +45,7 @@ def denoise_image(image_path):
     image = Image.open(image_path)
 
     # Resize the image while maintaining aspect ratio
-    desired_size = (448, 256)
+    desired_size = (256, 448)
     image = image.resize(desired_size, Image.ANTIALIAS)
 
     # Convert to tensor and normalize
@@ -60,29 +60,40 @@ def denoise_image(image_path):
         denoised_image = DAE(image)
     return denoised_image
 
-
 if __name__ == "__main__":
-    # Define argparse to accept image path
+    # Define argparse to accept image folder and output folder paths
     parser = argparse.ArgumentParser(description='Denoising Autoencoder')
-    parser.add_argument('--image_path', type=str, help='Path to the input image')
+    parser.add_argument('--image_folder', type=str, help='Path to the folder containing input images')
+    parser.add_argument('--output_folder', type=str, help='Path to the folder to save output images')
     args = parser.parse_args()
 
     # Load the pre-trained model
     DAE = DenoisingAE()
 
-    # Load the preprocessed image and pass it through the inference function
-    denoised_output = denoise_image(args.image_path)
+    # Create output folder if it doesn't exist
+    os.makedirs(args.output_folder, exist_ok=True)
 
-    # Convert the output tensor to a numpy array and remove the batch dimension
-    output_image = denoised_output.squeeze(0).cpu().numpy()
+    # Iterate over all images in the input folder
+    for filename in os.listdir(args.image_folder):
+        if filename.endswith(".jpg") or filename.endswith(".jpeg") or filename.endswith(".png"):
+            image_path = os.path.join(args.image_folder, filename)
+            print(f"Processing {image_path}...")
 
-    # Rescale values from [-1, 1] to [0, 1]
-    output_image = (output_image + 1) / 2.0
+            # Denoise the image
+            denoised_output = denoise_image(image_path)
 
-    # Transpose the dimensions to match the expected format for displaying using matplotlib
-    output_image = np.transpose(output_image, (1, 2, 0))
+            # Convert the output tensor to a numpy array and remove the batch dimension
+            output_image = denoised_output.squeeze(0).cpu().numpy()
 
-    # Display the output image
-    plt.imshow(output_image)
-    plt.axis('off')  # Turn off axis
-    plt.show()
+            # Rescale values from [-1, 1] to [0, 1]
+            output_image = (output_image + 1) / 2.0
+
+            # Transpose the dimensions to match the expected format for saving
+            output_image = np.transpose(output_image, (1, 2, 0))
+
+            # Save the output image
+            output_path = os.path.join(args.output_folder, filename)
+            plt.imsave(output_path, output_image)
+            print(f"Saved denoised image as {output_path}")
+
+    print("All images processed.")
