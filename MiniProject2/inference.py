@@ -6,7 +6,7 @@ import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
-from eval import psnr_between_folders
+import cv2
 
 class DenoisingAE(nn.Module):
     def __init__(self):
@@ -46,7 +46,7 @@ def denoise_image(image_path):
     image = Image.open(image_path)
 
     # Resize the image while maintaining aspect ratio
-    desired_size = (256, 448)
+    desired_size = (448, 256)
     image = image.resize(desired_size, Image.ANTIALIAS)
 
     # Convert to tensor and normalize
@@ -71,9 +71,6 @@ if __name__ == "__main__":
     # Load the pre-trained model
     DAE = DenoisingAE()
 
-    # Create output folder if it doesn't exist
-    os.makedirs(args.output_folder, exist_ok=True)
-
     # Iterate over all images in the input folder
     for filename in os.listdir(args.image_folder):
         if filename.endswith(".jpg") or filename.endswith(".jpeg") or filename.endswith(".png"):
@@ -94,11 +91,12 @@ if __name__ == "__main__":
 
             # Save the output image
             output_path = os.path.join(args.output_folder, filename)
-            plt.imsave(output_path, output_image)
+            print(output_image.shape)
+            # plt.imsave(output_path, output_image)
+            # save image using cv2
+            #scale image from 0 to 1 to 0 to 255
+            output_image = (output_image * 255).astype(np.uint8)
+            cv2.imwrite(output_path, output_image)
             print(f"Saved denoised image as {output_path}")
 
     print("All images processed.")
-
-    # Compute PSNR between blurred images and denoised output images
-    avg_psnr = psnr_between_folders(args.image_folder, args.output_folder)
-    print(f"Average PSNR between corresponding images: {avg_psnr} dB")
