@@ -10,7 +10,7 @@ def weights_init(m):
         nn.init.normal_(m.weight.data, 0.0, 0.02)
     elif(type(m) == nn.BatchNorm2d):
         nn.init.normal_(m.weight.data, 1.0, 0.02)
-        nn.init.constant_(m.bias.data, 0)
+        nn.init.constant_(m.bias.data, 0.0)
 
 class NormalNLLLoss:
     """

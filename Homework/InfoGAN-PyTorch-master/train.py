@@ -8,19 +8,16 @@ import matplotlib.animation as animation
 import time
 import random
 
-from models.mnist_model import Generator, Discriminator, DHead, QHead
+from models.patternet_model import Generator, Discriminator, DHead, QHead
 from dataloader import get_data
 from utils import *
 from config import params
+from datasets import load_dataset
 
-if(params['dataset'] == 'MNIST'):
-    from models.mnist_model import Generator, Discriminator, DHead, QHead
-elif(params['dataset'] == 'SVHN'):
-    from models.svhn_model import Generator, Discriminator, DHead, QHead
-elif(params['dataset'] == 'CelebA'):
-    from models.celeba_model import Generator, Discriminator, DHead, QHead
-elif(params['dataset'] == 'FashionMNIST'):
-    from models.mnist_model import Generator, Discriminator, DHead, QHead
+from torchsummary import summary
+
+
+PatternNet = load_dataset("blanchon/PatternNet")
 
 # Set random seed for reproducibility.
 seed = 1123
@@ -32,7 +29,7 @@ print("Random Seed: ", seed)
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
-dataloader = get_data(params['dataset'], params['batch_size'])
+train_loader = get_data(PatternNet['train'], params['batch_size'])
 
 # Set appropriate hyperparameters depending on the dataset used.
 # The values given in the InfoGAN paper are used.
@@ -40,29 +37,15 @@ dataloader = get_data(params['dataset'], params['batch_size'])
 # num_dis_c : number of discrete latent code used.
 # dis_c_dim : dimension of discrete latent code.
 # num_con_c : number of continuous latent code used.
-if(params['dataset'] == 'MNIST'):
-    params['num_z'] = 62
-    params['num_dis_c'] = 1
-    params['dis_c_dim'] = 10
-    params['num_con_c'] = 2
-elif(params['dataset'] == 'SVHN'):
+
+if (params['dataset'] == 'PatternNet'):
     params['num_z'] = 124
     params['num_dis_c'] = 4
     params['dis_c_dim'] = 10
     params['num_con_c'] = 4
-elif(params['dataset'] == 'CelebA'):
-    params['num_z'] = 128
-    params['num_dis_c'] = 10
-    params['dis_c_dim'] = 10
-    params['num_con_c'] = 0
-elif(params['dataset'] == 'FashionMNIST'):
-    params['num_z'] = 62
-    params['num_dis_c'] = 1
-    params['dis_c_dim'] = 10
-    params['num_con_c'] = 2
 
 # Plot the training images.
-sample_batch = next(iter(dataloader))
+sample_batch = next(iter(train_loader))
 plt.figure(figsize=(10, 10))
 plt.axis("off")
 plt.imshow(np.transpose(vutils.make_grid(
@@ -125,7 +108,7 @@ D_losses = []
 
 print("-"*25)
 print("Starting Training Loop...\n")
-print('Epochs: %d\nDataset: {}\nBatch Size: %d\nLength of Data Loader: %d'.format(params['dataset']) % (params['num_epochs'], params['batch_size'], len(dataloader)))
+print('Epochs: %d\nDataset: {}\nBatch Size: %d\nLength of Data Loader: %d'.format(params['dataset']) % (params['num_epochs'], params['batch_size'], len(train_loader)))
 print("-"*25)
 
 start_time = time.time()
@@ -134,7 +117,7 @@ iters = 0
 for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
 
-    for i, (data, _) in enumerate(dataloader, 0):
+    for i, (data, _) in enumerate(train_loader, 0):
         # Get batch size
         b_size = data.size(0)
         # Transfer data tensor to GPU/CPU (device)
@@ -143,7 +126,7 @@ for epoch in range(params['num_epochs']):
         # Updating discriminator and DHead
         optimD.zero_grad()
         # Real data
-        label = torch.full((b_size, ), real_label, device=device)
+        label = torch.full((b_size, ), real_label, device=device, dtype=torch.float32)
         output1 = discriminator(real_data)
         probs_real = netD(output1).view(-1)
         loss_real = criterionD(probs_real, label)
@@ -196,7 +179,7 @@ for epoch in range(params['num_epochs']):
         # Check progress of training.
         if i != 0 and i%100 == 0:
             print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f'
-                  % (epoch+1, params['num_epochs'], i, len(dataloader), 
+                  % (epoch+1, params['num_epochs'], i, len(train_loader), 
                     D_loss.item(), G_loss.item()))
 
         # Save the losses for plotting.

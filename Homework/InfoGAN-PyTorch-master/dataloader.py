@@ -1,17 +1,15 @@
+import os
+import pandas as pd
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 from torchvision import datasets, transforms
-import os
-
-from datasets import load_dataset
-PatternNet = load_dataset("blanchon/PatternNet")
-
-
-import os
-import pandas as pd
 from torchvision.io import read_image
+from datasets import load_dataset
+
+PatternNet = load_dataset("blanchon/PatternNet")
 
 class CustomImageDataset(Dataset):
     def __init__(self, dataset, transform=None):
@@ -36,7 +34,7 @@ def get_data(dataset, batch_size):
         transforms.ToTensor()
     ])
 
-    dataset = CustomImageDataset(PatternNet['train'], transform)
+    dataset = CustomImageDataset(dataset, transform)
 
     train_dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
